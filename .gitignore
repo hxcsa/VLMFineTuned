@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Data & model artifacts
+data/
+outputs/
+wandb/
+runs/
+checkpoints/
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.arrow
+*.parquet
+
+# Hugging Face / caches
+.cache/
+hf_cache/
+.huggingface/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / notebooks
+*.log
+.ipynb_checkpoints/
+
+# Secrets
+.env.*
+!.env.example
+secrets/
+*.pem

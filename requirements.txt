@@ -1,0 +1,25 @@
+# Qwen2.5-VL PEFT stack (Unsloth) — install torch/CUDA wheels first for your platform.
+# Example CUDA 12.1:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+# Then install Unsloth per https://docs.unsloth.ai (platform-specific).
+#   pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+# or the current recommended one-liner from Unsloth docs.
+
+torch>=2.2.0
+torchvision>=0.17.0
+transformers>=4.49.0
+datasets>=2.19.0
+accelerate>=0.33.0
+peft>=0.12.0
+trl>=0.12.0
+bitsandbytes>=0.43.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+pillow>=10.0.0
+gradio>=4.44.0
+wandb>=0.17.0
+hf_transfer>=0.1.6
+huggingface_hub>=0.24.0
+numpy>=1.26.0
+tqdm>=4.66.0
