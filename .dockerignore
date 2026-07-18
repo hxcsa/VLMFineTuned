@@ -1,0 +1,9 @@
+.git
+data/
+outputs/
+eval_results/
+*.log
+__pycache__/
+unsloth_compiled_cache/
+.venv/
+wandb/

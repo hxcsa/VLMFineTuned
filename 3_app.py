@@ -176,6 +176,9 @@ def prepare_inputs(tokenizer, image: Image.Image, question: str):
         messages,
         add_generation_prompt=True,
         tokenize=False,
+        # Qwen3.5-style models: skip the thinking block so answers stay concise.
+        # Harmless for templates that don't use it (e.g. Qwen2.5-VL).
+        enable_thinking=False,
     )
     # tokenizer here is the multimodal processor wrapper from Unsloth.
     inputs = tokenizer(

@@ -93,6 +93,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no-4bit", action="store_true", help="Disable 4-bit; use bf16 full base (needs more VRAM)")
     p.add_argument("--max-steps", type=int, default=-1, help="Override epoch-based schedule if > 0")
     p.add_argument("--resume-from", type=str, default=None)
+    p.add_argument(
+        "--finetune-mlp-modules",
+        action="store_true",
+        help="Also apply LoRA to language MLP (gate/up/down) — more capacity for grounding",
+    )
+    p.add_argument(
+        "--eval-holdout",
+        type=float,
+        default=0.0,
+        help="Fraction of training data held out for per-epoch eval + best-checkpoint selection (0 disables)",
+    )
     return p.parse_args()
 
 
@@ -228,7 +239,7 @@ def apply_lora(model, args: argparse.Namespace):
         finetune_vision_layers=False,      # STRICT: freeze entire ViT
         finetune_language_layers=True,
         finetune_attention_modules=True,   # q_proj, k_proj, v_proj, o_proj (+ variants)
-        finetune_mlp_modules=False,        # freeze MLP to cut adapter size / forgetting
+        finetune_mlp_modules=args.finetune_mlp_modules,  # optional: MLP LoRA adds capacity
         r=args.lora_r,                     # rank: capacity vs overfit tradeoff
         lora_alpha=args.lora_alpha,        # scaling; alpha==r → scale 1.0
         lora_dropout=LORA_DROPOUT,
@@ -236,13 +247,11 @@ def apply_lora(model, args: argparse.Namespace):
         random_state=args.seed,
         use_rslora=False,
         loftq_config=None,
-        # Pin to attention projections only (explicit list beats "all-linear" for freeze intent).
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-        ],
+        # Explicit list pins intent; MLP projections join only when requested.
+        target_modules=(
+            ["q_proj", "k_proj", "v_proj", "o_proj"]
+            + (["gate_proj", "up_proj", "down_proj"] if args.finetune_mlp_modules else [])
+        ),
     )
 
     # Belt-and-suspenders: force requires_grad=False on any vision parameter
@@ -275,7 +284,7 @@ def apply_lora(model, args: argparse.Namespace):
     return model
 
 
-def build_trainer(model, tokenizer, train_dataset, args: argparse.Namespace, report_to: str):
+def build_trainer(model, tokenizer, train_dataset, eval_dataset, args: argparse.Namespace, report_to: str):
     from unsloth.trainer import UnslothVisionDataCollator
     from trl import SFTTrainer, SFTConfig
 
@@ -304,17 +313,26 @@ def build_trainer(model, tokenizer, train_dataset, args: argparse.Namespace, rep
     use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
     use_fp16 = torch.cuda.is_available() and not use_bf16
 
+    # With a holdout, evaluate + save per epoch and keep the best checkpoint
+    # (proper model selection instead of "last epoch wins").
+    use_eval = eval_dataset is not None and len(eval_dataset) > 0
+
     sft_args = SFTConfig(
         output_dir=str(output_dir),
         per_device_train_batch_size=args.per_device_batch_size,
         gradient_accumulation_steps=args.grad_accum_steps,
-        # Effective batch 8: good SNR for LoRA without blowing activation memory.
+        # Effective batch 8: good SNR for LoRA without large activation memory.
         learning_rate=args.learning_rate,
         logging_steps=LOGGING_STEPS,
         save_steps=SAVE_STEPS,
         save_total_limit=2,
         num_train_epochs=args.num_epochs,
         max_steps=args.max_steps if args.max_steps and args.max_steps > 0 else -1,
+        eval_strategy="epoch" if use_eval else "no",
+        save_strategy="epoch" if use_eval else "steps",
+        load_best_model_at_end=use_eval,
+        metric_for_best_model="eval_loss" if use_eval else None,
+        per_device_eval_batch_size=1,
         optim="adamw_8bit",  # 8-bit Adam: ~2x optimizer state savings vs fp32 AdamW
         weight_decay=WEIGHT_DECAY,
         lr_scheduler_type=LR_SCHEDULER,
@@ -342,6 +360,7 @@ def build_trainer(model, tokenizer, train_dataset, args: argparse.Namespace, rep
         tokenizer=tokenizer,
         data_collator=collator,
         train_dataset=train_dataset,
+        eval_dataset=eval_dataset if use_eval else None,
         args=sft_args,
     )
     return trainer
@@ -385,6 +404,24 @@ def main() -> int:
         report_to = setup_wandb(args)
 
         train_dataset = load_processed_dataset(args.dataset_dir)
+
+        # Holdout split (seeded) for per-epoch eval + best-checkpoint selection.
+        eval_dataset = None
+        if args.eval_holdout and args.eval_holdout > 0:
+            import random
+
+            idx = list(range(len(train_dataset)))
+            random.Random(args.seed).shuffle(idx)
+            n_eval = max(1, int(len(idx) * args.eval_holdout))
+            eval_dataset = [train_dataset[i] for i in sorted(idx[:n_eval])]
+            train_dataset = [train_dataset[i] for i in sorted(idx[n_eval:])]
+            logger.info(
+                "Holdout enabled: train=%d | eval=%d (%.1f%%)",
+                len(train_dataset),
+                len(eval_dataset),
+                100.0 * args.eval_holdout,
+            )
+
         model, tokenizer, loaded_id = load_model_and_tokenizer(args)
         logger.info("Using base model: %s", loaded_id)
 
@@ -395,7 +432,7 @@ def main() -> int:
 
         FastVisionModel.for_training(model)
 
-        trainer = build_trainer(model, tokenizer, train_dataset, args, report_to)
+        trainer = build_trainer(model, tokenizer, train_dataset, eval_dataset, args, report_to)
 
         # Show VRAM before train
         if torch.cuda.is_available():
