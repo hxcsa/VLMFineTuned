@@ -44,6 +44,9 @@ Thumbs.db
 *.log
 .ipynb_checkpoints/
 
+# Unsloth kernel cache
+unsloth_compiled_cache/
+
 # Secrets
 .env.*
 !.env.example
