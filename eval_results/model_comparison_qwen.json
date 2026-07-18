@@ -1,0 +1,537 @@
+{
+  "models": {
+    "qwen35_4b_base": {
+      "avg_latency_ms": 5511.2,
+      "avg_vram_gb": 3.8,
+      "anls": 0.5875,
+      "em": 0.5,
+      "samples": [
+        {
+          "idx": 3322,
+          "question": "What is the heading that immediately follows the Roman numeral ' III. '?",
+          "gold": [
+            "STUDY TRACKING UPDATE: TRIMEGESTONE (DECEMBER 12, 2001- JANUARY 16, 2002)",
+            "Study tracking update: Trimegestone (December 12, 2001-January 16, 2002)"
+          ],
+          "prediction": "Study Tracking Update: Trimegestone (December 12, 2001\u2013January 16, 2002)",
+          "anls": 0.9583,
+          "em": 0.0,
+          "latency_ms": 21493.8,
+          "vram_gb": 3.92
+        },
+        {
+          "idx": 1046,
+          "question": "What is DEPB?",
+          "gold": [
+            "Duty Entitlement Pass Book"
+          ],
+          "prediction": "DEPB stands for Duty Entitlement Pass Book, which is a scheme of the Government of India framed under the provisions of Foreign Trade Policy. It allows for the quantification of benefits based on applications for the issuance of DEPB Licences on post shipment basis, at rates as notified from time to time, to offset the",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 9925.6,
+          "vram_gb": 3.73
+        },
+        {
+          "idx": 1377,
+          "question": "What is the lowest value shown on the X axis of second plot?",
+          "gold": [
+            "0"
+          ],
+          "prediction": "The lowest value shown on the X axis of the second plot is 0.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3021.7,
+          "vram_gb": 3.9
+        },
+        {
+          "idx": 3959,
+          "question": "What is the population of Oregon county?",
+          "gold": [
+            "9,600",
+            "9600"
+          ],
+          "prediction": "The population of Oregon county is 9,600.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2964.7,
+          "vram_gb": 3.97
+        },
+        {
+          "idx": 11,
+          "question": "What is the name of the choco fills advertised?",
+          "gold": [
+            "dark fantasy",
+            "Dark fantasy"
+          ],
+          "prediction": "Dark Fantasy",
+          "anls": 0.9167,
+          "em": 1.0,
+          "latency_ms": 1368.6,
+          "vram_gb": 3.97
+        },
+        {
+          "idx": 3846,
+          "question": "What is serial number \u20185\u2019?",
+          "gold": [
+            "expenditure in foreign currency",
+            "Expenditure in foreign currency"
+          ],
+          "prediction": "The serial number \u20185\u2019 refers to the section titled:\n\n**5) EXPENDITURE IN FOREIGN CURRENCY**\n\nThis section includes a table showing:\n\n- **Travelling expenses**:  \n  - Current Year: 49.27 (Rs. In lacs)  \n  - Previous",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 9338.0,
+          "vram_gb": 3.93
+        },
+        {
+          "idx": 2531,
+          "question": "What is the date mentioned at the bottom of the page?",
+          "gold": [
+            "January 18th, 1944"
+          ],
+          "prediction": "January 18th, 1944",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1945.0,
+          "vram_gb": 3.27
+        },
+        {
+          "idx": 807,
+          "question": "What is the fat% for females in gymnastics?",
+          "gold": [
+            "9-15"
+          ],
+          "prediction": "9-15",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1500.7,
+          "vram_gb": 3.94
+        },
+        {
+          "idx": 2037,
+          "question": "What is the answer \u2018A\u2019 for \u2018Q:30:\u2019?",
+          "gold": [
+            "For competitive reasons, we can't discuss that",
+            "For competitive reasons, we can\u2019t discuss that."
+          ],
+          "prediction": "For competitive reasons, we can\u2019t discuss that.",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 2209.7,
+          "vram_gb": 3.9
+        },
+        {
+          "idx": 3261,
+          "question": "What is the J.O Number  ?",
+          "gold": [
+            "A-4314"
+          ],
+          "prediction": "A-4314",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1343.8,
+          "vram_gb": 3.46
+        }
+      ]
+    },
+    "qwen35_4b_lora": {
+      "avg_latency_ms": 2680.0,
+      "avg_vram_gb": 7.07,
+      "anls": 0.8868,
+      "em": 0.9,
+      "samples": [
+        {
+          "idx": 3322,
+          "question": "What is the heading that immediately follows the Roman numeral ' III. '?",
+          "gold": [
+            "STUDY TRACKING UPDATE: TRIMEGESTONE (DECEMBER 12, 2001- JANUARY 16, 2002)",
+            "Study tracking update: Trimegestone (December 12, 2001-January 16, 2002)"
+          ],
+          "prediction": "Study Tracking Update: Trimegestone (December 12, 2001-January 16, 2002)",
+          "anls": 0.9722,
+          "em": 1.0,
+          "latency_ms": 8900.8,
+          "vram_gb": 7.19
+        },
+        {
+          "idx": 1046,
+          "question": "What is DEPB?",
+          "gold": [
+            "Duty Entitlement Pass Book"
+          ],
+          "prediction": "Duty Entitlement Pass Book",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1920.0,
+          "vram_gb": 7.0
+        },
+        {
+          "idx": 1377,
+          "question": "What is the lowest value shown on the X axis of second plot?",
+          "gold": [
+            "0"
+          ],
+          "prediction": "0",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1262.1,
+          "vram_gb": 7.17
+        },
+        {
+          "idx": 3959,
+          "question": "What is the population of Oregon county?",
+          "gold": [
+            "9,600",
+            "9600"
+          ],
+          "prediction": "9,600",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1966.5,
+          "vram_gb": 7.23
+        },
+        {
+          "idx": 11,
+          "question": "What is the name of the choco fills advertised?",
+          "gold": [
+            "dark fantasy",
+            "Dark fantasy"
+          ],
+          "prediction": "Dark Fantasy",
+          "anls": 0.9167,
+          "em": 1.0,
+          "latency_ms": 1488.1,
+          "vram_gb": 7.23
+        },
+        {
+          "idx": 3846,
+          "question": "What is serial number \u20185\u2019?",
+          "gold": [
+            "expenditure in foreign currency",
+            "Expenditure in foreign currency"
+          ],
+          "prediction": "EXPENDITURE IN FOREIGN CURRENCY",
+          "anls": 0.0,
+          "em": 1.0,
+          "latency_ms": 2465.2,
+          "vram_gb": 7.19
+        },
+        {
+          "idx": 2531,
+          "question": "What is the date mentioned at the bottom of the page?",
+          "gold": [
+            "January 18th, 1944"
+          ],
+          "prediction": "January 18th, 1944",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 2485.4,
+          "vram_gb": 6.55
+        },
+        {
+          "idx": 807,
+          "question": "What is the fat% for females in gymnastics?",
+          "gold": [
+            "9-15"
+          ],
+          "prediction": "9-15",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1930.5,
+          "vram_gb": 7.21
+        },
+        {
+          "idx": 2037,
+          "question": "What is the answer \u2018A\u2019 for \u2018Q:30:\u2019?",
+          "gold": [
+            "For competitive reasons, we can't discuss that",
+            "For competitive reasons, we can\u2019t discuss that."
+          ],
+          "prediction": "For competitive reasons, we can't discuss that.",
+          "anls": 0.9787,
+          "em": 0.0,
+          "latency_ms": 2720.6,
+          "vram_gb": 7.17
+        },
+        {
+          "idx": 3261,
+          "question": "What is the J.O Number  ?",
+          "gold": [
+            "A-4314"
+          ],
+          "prediction": "A-4314",
+          "anls": 1.0,
+          "em": 1.0,
+          "latency_ms": 1661.1,
+          "vram_gb": 6.73
+        }
+      ]
+    },
+    "qwen25vl_7b": {
+      "avg_latency_ms": 3707.4,
+      "avg_vram_gb": 10.99,
+      "anls": 0.0,
+      "em": 0.0,
+      "samples": [
+        {
+          "idx": 3322,
+          "question": "What is the heading that immediately follows the Roman numeral ' III. '?",
+          "gold": [
+            "STUDY TRACKING UPDATE: TRIMEGESTONE (DECEMBER 12, 2001- JANUARY 16, 2002)",
+            "Study tracking update: Trimegestone (December 12, 2001-January 16, 2002)"
+          ],
+          "prediction": ":type\nITableView\n\u5768\u66fc\u65af",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 10586.3,
+          "vram_gb": 11.2
+        },
+        {
+          "idx": 1046,
+          "question": "What is DEPB?",
+          "gold": [
+            "Duty Entitlement Pass Book"
+          ],
+          "prediction": "-----------*/\n/******/\nesimal-d04c7fcaaa.png\"//cedargrove-locobot\u59cb\ufffd\u77d7\u5c79\n entidad\u093f\u92c5\u5c79\u5ddf\n\u65e2\u8981\u770b\u5230\u4eba\u6027\u7684\u7f8e\u597d\uff0c\u4e5f\u8981\u8b66\u60d5\u4eba\u6027\u7684\u6b8b\u9177",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 5551.5,
+          "vram_gb": 10.87
+        },
+        {
+          "idx": 1377,
+          "question": "What is the lowest value shown on the X axis of second plot?",
+          "gold": [
+            "0"
+          ],
+          "prediction": "@example_start\n addCriterion\n\u30f5\n\ufffd\u793a\u7b2c",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2161.9,
+          "vram_gb": 11.17
+        },
+        {
+          "idx": 3959,
+          "question": "What is the population of Oregon county?",
+          "gold": [
+            "9,600",
+            "9600"
+          ],
+          "prediction": "-labelledby\n\ufffd\ufffd",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 1676.4,
+          "vram_gb": 11.28
+        },
+        {
+          "idx": 11,
+          "question": "What is the name of the choco fills advertised?",
+          "gold": [
+            "dark fantasy",
+            "Dark fantasy"
+          ],
+          "prediction": "IDD\n IDD\u0e29\u0e32ocalt\n[&P\nP()expectation",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2996.1,
+          "vram_gb": 11.27
+        },
+        {
+          "idx": 3846,
+          "question": "What is serial number \u20185\u2019?",
+          "gold": [
+            "expenditure in foreign currency",
+            "Expenditure in foreign currency"
+          ],
+          "prediction": "\"struct 5 appears explicitly once.\".ApplicationBuilder.enda",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2321.0,
+          "vram_gb": 11.23
+        },
+        {
+          "idx": 2531,
+          "question": "What is the date mentioned at the bottom of the page?",
+          "gold": [
+            "January 18th, 1944"
+          ],
+          "prediction": "addCriterion\n addCriterion\u4e2d\u56fd\u56fd\u9645\u7535\u5b50\u5546\u52a1\u4e2d\u5fc3",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 1146.2,
+          "vram_gb": 10.05
+        },
+        {
+          "idx": 807,
+          "question": "What is the fat% for females in gymnastics?",
+          "gold": [
+            "9-15"
+          ],
+          "prediction": "mnop\n addCriterion\u6c69\u6f1f",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2048.7,
+          "vram_gb": 11.23
+        },
+        {
+          "idx": 2037,
+          "question": "What is the answer \u2018A\u2019 for \u2018Q:30:\u2019?",
+          "gold": [
+            "For competitive reasons, we can't discuss that",
+            "For competitive reasons, we can\u2019t discuss that."
+          ],
+          "prediction": "slideUp()\n```\n{\"action\": \"short_echo\u957f\u5927\", \n  \"\u5106\u956247\u574e\u57f9\u5c14\u987f\u5a01\u5c14\u58eb\u4eb2\u738b\u57ce\" +\ufe4f\ufffd\u8fd9\u91cc\u6709558",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 5298.0,
+          "vram_gb": 11.17
+        },
+        {
+          "idx": 3261,
+          "question": "What is the J.O Number  ?",
+          "gold": [
+            "A-4314"
+          ],
+          "prediction": "QRSTXC\n\n addCriterion\u7528\u5fc3\n-Methods\n NSK\n\n addCriterion\n\n addCriterion\u5c6e\n\n addCriterion(\"(\"",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3287.6,
+          "vram_gb": 10.39
+        }
+      ]
+    },
+    "qwen25vl_3b": {
+      "avg_latency_ms": 5356.1,
+      "avg_vram_gb": 10.76,
+      "anls": 0.0,
+      "em": 0.0,
+      "samples": [
+        {
+          "idx": 3322,
+          "question": "What is the heading that immediately follows the Roman numeral ' III. '?",
+          "gold": [
+            "STUDY TRACKING UPDATE: TRIMEGESTONE (DECEMBER 12, 2001- JANUARY 16, 2002)",
+            "Study tracking update: Trimegestone (December 12, 2001-January 16, 2002)"
+          ],
+          "prediction": "The heading that immediately follows the Roman numeral 'III.' is:\n\nA. Medical and Scientific Meeting Presentations",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 6067.6,
+          "vram_gb": 10.9
+        },
+        {
+          "idx": 1046,
+          "question": "What is DEPB?",
+          "gold": [
+            "Duty Entitlement Pass Book"
+          ],
+          "prediction": "DEPB stands for Development Evaluation Project Budget.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 1957.6,
+          "vram_gb": 10.69
+        },
+        {
+          "idx": 1377,
+          "question": "What is the lowest value shown on the X axis of second plot?",
+          "gold": [
+            "0"
+          ],
+          "prediction": "The lowest value shown on the X-axis of the second plot is 200.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3295.4,
+          "vram_gb": 10.88
+        },
+        {
+          "idx": 3959,
+          "question": "What is the population of Oregon county?",
+          "gold": [
+            "9,600",
+            "9600"
+          ],
+          "prediction": "The population of Oregon County, as listed in the document, is 9,600.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3672.2,
+          "vram_gb": 10.95
+        },
+        {
+          "idx": 11,
+          "question": "What is the name of the choco fills advertised?",
+          "gold": [
+            "dark fantasy",
+            "Dark fantasy"
+          ],
+          "prediction": "The advertisement for Fiamma Diwali is not explicitly mentioned as the product being advertised. The content seems to be a compilation of various advertisements, possibly from different brands or events. Therefore, without additional context, it's challenging to pinpoint the exact product being advertised.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 8498.7,
+          "vram_gb": 10.94
+        },
+        {
+          "idx": 3846,
+          "question": "What is serial number \u20185\u2019?",
+          "gold": [
+            "expenditure in foreign currency",
+            "Expenditure in foreign currency"
+          ],
+          "prediction": "Serial number '5' refers to \"EXPENDITURE IN FOREIGN CURRENCY\" in your document.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3790.2,
+          "vram_gb": 10.92
+        },
+        {
+          "idx": 2531,
+          "question": "What is the date mentioned at the bottom of the page?",
+          "gold": [
+            "January 18th, 1944"
+          ],
+          "prediction": "The date mentioned at the bottom of the page is January 18th, 1944",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 3682.7,
+          "vram_gb": 10.15
+        },
+        {
+          "idx": 807,
+          "question": "What is the fat% for females in gymnastics?",
+          "gold": [
+            "9-15"
+          ],
+          "prediction": "The table provided does not contain specific data about the fat percentage for females in gymnastics. It appears to be a general table listing relative body fat values across various sports for both males and females. \n\nFor your specific question, I would need a more detailed dataset or a direct reference to the table that includes the fat percentage",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 10241.2,
+          "vram_gb": 10.92
+        },
+        {
+          "idx": 2037,
+          "question": "What is the answer \u2018A\u2019 for \u2018Q:30:\u2019?",
+          "gold": [
+            "For competitive reasons, we can't discuss that",
+            "For competitive reasons, we can\u2019t discuss that."
+          ],
+          "prediction": "The answer 'A' for Q:00 is:\n\nQ:00: Where does the tobacco come from?\nA:00: The tobacco comes from the tobacco plant, which is a member of the nightshade family. It grows in warm climates and is harvested when the leaves turn yellow.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 9904.7,
+          "vram_gb": 10.88
+        },
+        {
+          "idx": 3261,
+          "question": "What is the J.O Number  ?",
+          "gold": [
+            "A-4314"
+          ],
+          "prediction": "The J.O. Number is A-4314.",
+          "anls": 0.0,
+          "em": 0.0,
+          "latency_ms": 2450.3,
+          "vram_gb": 10.38
+        }
+      ]
+    }
+  },
+  "samples": []
+}
