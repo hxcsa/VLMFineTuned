@@ -14,10 +14,6 @@ After weeks of iteration on document visual question answering, I am sharing the
 |-------|------|-------------|---------|------|
 | **Qwen3.5-4B + LoRA (Ours)** | **0.8868** | **0.9000** | **2.7s** | **7.1 GB** |
 | Qwen3.5-4B Zero-Shot | 0.5875 | 0.5000 | 5.5s | 3.8 GB |
-| Qwen2.5-VL-7B* | 0.0000 | 0.0000 | 3.7s | 11 GB |
-| Qwen2.5-VL-3B* | 0.0000 | 0.0000 | 5.4s | 11 GB |
-
-*Template mismatch — models generated text but scored 0 ANLS. Fixable with correct chat template.
 
 Our LoRA: +0.30 ANLS over zero-shot, 2x faster, half the VRAM of 7B.
 
