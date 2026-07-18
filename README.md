@@ -1,11 +1,35 @@
 # VLMFineTuned — DocVQA Fine-Tuning with Unsloth LoRA
 
-Parameter-efficient fine-tuning of a vision-language model for **document visual
-question answering** (DocVQA). The model learns to read a document image and
-return a short, extractive answer.
+Parameter-efficient fine-tuning of a vision-language model for document visual question answering (DocVQA). The model learns to read a document image and return a short, extractive answer.
 
-**Final model:** `Qwen/Qwen3.5-4B` + LoRA (r=32, MLP enabled) — **ANLS 0.8833**
-on clean DocVQA validation (300 samples, seed 1234, 1344px). Adapters: 34 MB.
+**Final model:** `Qwen/Qwen3.5-4B` + LoRA (r=32, MLP enabled) — ANLS 0.8833 on clean DocVQA validation (300 samples, seed 1234, 1344px). Adapters: 34 MB.
+
+---
+
+## Project Description
+
+This project implements a complete, reproducible pipeline for fine-tuning vision-language models on the DocVQA dataset using parameter-efficient LoRA adapters. The key contribution is demonstrating that clean train/validation splits, proper LoRA configuration (including MLP modules), and thinking-aware inference can achieve strong DocVQA performance with minimal compute.
+
+### Key Features
+
+- **Clean train/validation methodology** — Trained on DocVQA train split, evaluated on held-out validation split
+- **MLP LoRA support** — Extends standard attention-only LoRA with gate/up/down projection adapters
+- **Holdout evaluation during training** — Automatic best-checkpoint selection via validation loss
+- **Thinking-aware inference** — Proper `enable_thinking=False` handling for Qwen3.5-style models
+- **Comprehensive evaluation** — ANLS (official DocVQA metric) + exact match reporting
+- **Production-ready artifacts** — Dockerfile, Gradio demo, Hugging Face model/dataset cards
+- **Reproducible pipeline** — Single-command data prep, training, and evaluation
+
+### Results Summary
+
+| Configuration | ANLS (300 val) | Exact Match | Notes |
+|---------------|----------------|-------------|-------|
+| Qwen3.5-4B Zero-Shot | 0.6265 | 0.5933 | Baseline |
+| v1 LoRA (1k from val, contaminated) | 0.8626 | 0.8333 | Not clean |
+| v2 r16 attn-only (2k train) | 0.8687 | 0.8567 | Clean |
+| **v2 r32 + MLP (2k train)** | **0.8833** | **0.8667** | **Winner** |
+
+**Improvement:** +0.26 ANLS over zero-shot, clean train-to-val evaluation.
 
 ---
 
@@ -16,10 +40,10 @@ on clean DocVQA validation (300 samples, seed 1234, 1344px). Adapters: 34 MB.
 git clone https://github.com/hxcsa/VLMFineTuned.git
 cd VLMFineTuned
 
-# 2. Install deps (PyTorch/CUDA first per your platform, then)
+# 2. Install dependencies (PyTorch/CUDA first per your platform, then)
 pip install -r requirements.txt
 
-# 3. Run the Gradio demo (loads the best adapter from HF)
+# 3. Run the Gradio demo (loads best adapter from HF)
 python 3_app.py --model Qwen/Qwen3.5-4B --adapter-dir hxcsa/qwen35-4b-docvqa-lora
 
 # Or use the live demo (if this instance is running):
@@ -28,58 +52,19 @@ python 3_app.py --model Qwen/Qwen3.5-4B --adapter-dir hxcsa/qwen35-4b-docvqa-lor
 
 ---
 
-## Results
+## Tech Stack
 
-### Quantitative (ANLS on 300 DocVQA validation samples, seed 1234, max edge 1344px)
-
-| Model | ANLS | Exact Match | Notes |
-|-------|------|-------------|-------|
-| Qwen3.5-4B base (zero-shot) | **0.6265** | 0.5933 | Baseline |
-| v1 LoRA (r=16, attn-only, 1 epoch, 1k samples from **val**) | 0.8626 | 0.8333 | **Contaminated** — trained on val |
-| v2 r16 attn-only (2 epochs, 2k train) | 0.8687 | 0.8567 | Clean eval |
-| **v2 r32 + MLP (2 epochs, 2k train)** | **0.8833** | **0.8667** | **Winner** |
-
-**Key insight:** the zero-shot base already scores 0.63 ANLS. LoRA on clean train
-data pushes it to **0.88** — a +0.26 absolute gain.
-
-### Qualitative (greedy, `enable_thinking=False`)
-
-| Question | Gold | Prediction |
-|----------|------|------------|
-| How was the amount contributed? | CHECK | CHECK |
-| Which acetabular shell is measured over Porocoat? | pinnacle | 54 mm Pinnacle |
-| What is the name of the company? | itc limited | ITC Limited |
-| Who wrote the letter? | Kay | Kay |
-
----
-
-## Project Structure
-
-```
-VLMFineTuned/
-├── 1_prepare_data.py      # Download DocVQA → quality filter → top-K → Qwen-VL chat schema
-├── 2_train.py             # Unsloth FastVisionModel + LoRA (attn + optional MLP, ViT frozen)
-├── 3_app.py               # Gradio demo (streaming, enable_thinking=False fix)
-├── 4_evaluate.py          # ANLS + exact-match eval harness (official DocVQA metric)
-├── compare.py             # Side-by-side base vs LoRA predictions
-├── hf_infer.py            # Plain Transformers single-sample inference
-├── Dockerfile             # Slim inference image (runtime only, fetches adapters from HF)
-├── docker-entrypoint.sh   # Entrypoint for the Docker image
-├── .dockerignore
-├── requirements.txt       # Python deps (install torch/CUDA first)
-├── data/                  # (gitignored) processed datasets
-│   ├── docvqa_test/       # 20-sample smoke test
-│   ├── docvqa_1k_qwen_vl/ # 1k from val (v1)
-│   └── docvqa_2k_train/   # 2k from train (v2, 1344px)
-├── outputs/               # (gitignored) training runs
-│   ├── test_run/          # 20-sample smoke
-│   ├── qwen3.5_test/      # 20-sample with Qwen3.5
-│   ├── qwen25vl_3b_docvqa_lora/ # 1k val, 3B
-│   ├── v2_r32_mlp/        # 2k train, r32+MLP (WINNER)
-│   └── v2_r16_attn/       # 2k train, r16 attn-only
-├── eval_results/          # (gitignored) ANLS eval outputs
-└── README.md              # This file
-```
+| Category | Technology |
+|----------|------------|
+| **Training Framework** | Unsloth (2x faster training, 4-bit quantization) |
+| **LoRA / PEFT** | TRL + PEFT (response-only loss) |
+| **Base Model** | Qwen3.5-4B (thinking-style) |
+| **Hardware** | NVIDIA RTX A6000 (48 GB) |
+| **Model Hub** | Hugging Face Hub |
+| **Evaluation** | ANLS (ICDAR DocVQA standard) + Exact Match |
+| **Serving** | Gradio + Unsloth FastVisionModel |
+| **Containerization** | Docker (pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime) |
+| **Experiment Tracking** | Optional Weights & Biases |
 
 ---
 
@@ -88,32 +73,18 @@ VLMFineTuned/
 ### 1. Data Preparation (`1_prepare_data.py`)
 
 ```bash
-# V1 (from val split, 1024px, 1k samples)
-python 1_prepare_data.py --dataset lmms-lab/DocVQA --dataset-name DocVQA --split validation \
-  --target-size 1000 --max-image-edge 1024 --output-dir data/docvqa_1k_qwen_vl
-
 # V2 (from train split, 1344px, 2k samples)
 python 1_prepare_data.py --dataset HuggingFaceM4/DocumentVQA --split train \
   --target-size 2000 --max-image-edge 1344 --output-dir data/docvqa_2k_train
 ```
 
-**What it does:**
+**Process:**
 - Loads raw DocVQA (lmms-lab/DocVQA or HuggingFaceM4/DocumentVQA)
-- Validates: question ≥5 chars, answer ≤256 chars (shortest of candidates), valid RGB image
+- Validates: question ≥5 chars, answer ≤256 chars (shortest candidate), valid RGB image
 - Filters aspect ratio ≤4.0, resizes long edge to max (LANCZOS)
 - Scores candidates: concise answers, clear questions, readable page sizes, multi-answer agreement
 - Takes top-K (3× pool → rank → shuffle with seed 3407)
-- Saves in Unsloth-VL conversational schema:
-  ```json
-  {
-    "messages": [
-      {"role":"system","content":[{"type":"text","text":"You are a precise document visual question answering assistant..."}]},
-      {"role":"user","content":[{"type":"image","image":<PIL>},{"type":"text","text":"<question>"}]},
-      {"role":"assistant","content":[{"type":"text","text":"<answer>"}]}
-    ],
-    "meta": {"question":"...","answer":"...","quality_score":82.5,"image_size":[1024,768]}
-  }
-  ```
+- Saves in Unsloth-VL conversational schema with PIL images embedded
 
 ### 2. Training (`2_train.py`)
 
@@ -129,7 +100,7 @@ python 2_train.py \
   --wandb-mode disabled
 ```
 
-**Key settings:**
+**Key Settings:**
 - Base: `Qwen/Qwen3.5-4B` (4-bit NF4 via bitsandbytes)
 - LoRA: r=32, α=32, dropout=0 — **attention** (`q/k/v/o_proj`) + **MLP** (`gate/up/down_proj`)
 - ViT frozen: `finetune_vision_layers=False` + explicit `requires_grad=False` sweep
@@ -148,23 +119,21 @@ python 4_evaluate.py \
   --output eval_results/v2_r32_mlp_val300.json
 ```
 
-**ANLS metric (ICDAR DocVQA standard):**
+**ANLS Metric (ICDAR DocVQA Standard):**
 - For each prediction, compute best score over all gold answers:
-  `score = max(1 - NLD) if NLD < 0.5 else 0` where `NLD = levenshtein / max(len)`.
-- Also reports case/space-insensitive exact match.
+  `score = max(1 - NLD) if NLD < 0.5 else 0` where `NLD = levenshtein / max(len)`
+- Also reports case/space-insensitive exact match
 
 ---
 
 ## Inference Gotcha: `enable_thinking=False`
 
-`Qwen3.5-4B` is a **thinking-style** model — by default it emits long chain-of-thought
-before the answer, hiding the concise trained behavior and truncating at low
-`max_new_tokens`. **Always disable thinking:**
+`Qwen3.5-4B` is a **thinking-style** model — by default it emits long chain-of-thought before the answer, hiding the concise trained behavior and truncating at low `max_new_tokens`. **Always disable thinking:**
 
 ```python
 text = processor.apply_chat_template(
     messages, add_generation_prompt=True, tokenize=False,
-    enable_thinking=False  # ← critical
+    enable_thinking=False  # critical
 )
 ```
 
@@ -224,8 +193,8 @@ hf upload <user>/qwen35-4b-docvqa-lora README.md
 
 ## Artifacts on Hugging Face
 
-| Repo | Contents |
-|------|----------|
+| Repository | Contents |
+|------------|----------|
 | `hxcsa/qwen35-4b-docvqa-lora` | LoRA adapters (34 MB), tokenizer, chat template, **model card with metrics** |
 | `hxcsa/docvqa-1k-qwen-vl` | 1k samples from val (v1), 453 MB |
 | `hxcsa/docvqa-2k-train` | 2k samples from train (v2), 1.1 GB |
@@ -234,8 +203,7 @@ hf upload <user>/qwen35-4b-docvqa-lora README.md
 
 ## Live Demo
 
-On this Vast.ai instance: external port **10100** (token auth via `OPEN_BUTTON_TOKEN` /
-`WEB_PASSWORD`), internal Gradio on 7860. Managed by supervisor as `vlm-demo`.
+On this Vast.ai instance: external port **10100** (token auth via `OPEN_BUTTON_TOKEN` / `WEB_PASSWORD`), internal Gradio on 7860. Managed by supervisor as `vlm-demo`.
 
 ```bash
 # Access
@@ -261,7 +229,7 @@ Apache-2.0 (code) / base model license applies to weights.
 
 ## Next Steps / Ideas
 
-- Larger train split (full 39k DocVQA train) → more data = better grounding
+- Scale to full 39k DocVQA train split
 - Ablate vision-layer LoRA (currently frozen) on larger VRAM
-- Distill thinking traces → teach the model to reason for multi-step questions
-- ONNX/TensorRT export for lower-latency serving
+- Distill thinking traces for multi-step reasoning
+- ONNX / TensorRT export for lower-latency serving
