@@ -1,164 +1,267 @@
 # VLMFineTuned — DocVQA Fine-Tuning with Unsloth LoRA
 
-Parameter-efficient fine-tuning (PEFT) of a vision-language model on **DocVQA**
-(document visual question answering) using **Unsloth FastVisionModel + LoRA**.
-The model learns to read a document image and return a short, extractive answer.
+Parameter-efficient fine-tuning of a vision-language model for **document visual
+question answering** (DocVQA). The model learns to read a document image and
+return a short, extractive answer.
 
-**Final model:** `Qwen/Qwen3.5-4B` + LoRA adapters (12.6 MB) trained on 1,000
-curated DocVQA samples. Adapters live in
-`outputs/qwen35_4b_docvqa_lora/lora_adapters/`.
+**Final model:** `Qwen/Qwen3.5-4B` + LoRA (r=32, MLP enabled) — **ANLS 0.8833**
+on clean DocVQA validation (300 samples, seed 1234, 1344px). Adapters: 34 MB.
 
 ---
 
-## Results at a glance
+## Quick Start
 
-| Item | Value |
-|---|---|
-| Base model | `Qwen/Qwen3.5-4B` (4-bit NF4 via bitsandbytes) |
-| Adapter | LoRA r=16, α=16, dropout 0 — attention only (`q/k/v/o_proj`) |
-| Trainable params | 3,145,728 (0.07% of 4.54B) — ViT fully frozen |
-| Training data | 1,000 top-quality DocVQA samples (`data/docvqa_1k_qwen_vl/`) |
-| Schedule | 1 epoch = 125 steps, effective batch 8 (1 × grad-accum 8) |
-| Final avg train loss | **0.355** (1.03 → ~0.2–0.38) |
-| Train time | 11m51s on 1× RTX A6000 (peak VRAM 3.75 GB) |
+```bash
+# 1. Clone
+git clone https://github.com/hxcsa/VLMFineTuned.git
+cd VLMFineTuned
 
-Sanity check (fine-tuned model, greedy decoding, thinking disabled):
+# 2. Install deps (PyTorch/CUDA first per your platform, then)
+pip install -r requirements.txt
+
+# 3. Run the Gradio demo (loads the best adapter from HF)
+python 3_app.py --model Qwen/Qwen3.5-4B --adapter-dir hxcsa/qwen35-4b-docvqa-lora
+
+# Or use the live demo (if this instance is running):
+# https://72.83.150.152:55817/  (external port 10100, token auth)
+```
+
+---
+
+## Results
+
+### Quantitative (ANLS on 300 DocVQA validation samples, seed 1234, max edge 1344px)
+
+| Model | ANLS | Exact Match | Notes |
+|-------|------|-------------|-------|
+| Qwen3.5-4B base (zero-shot) | **0.6265** | 0.5933 | Baseline |
+| v1 LoRA (r=16, attn-only, 1 epoch, 1k samples from **val**) | 0.8626 | 0.8333 | **Contaminated** — trained on val |
+| v2 r16 attn-only (2 epochs, 2k train) | 0.8687 | 0.8567 | Clean eval |
+| **v2 r32 + MLP (2 epochs, 2k train)** | **0.8833** | **0.8667** | **Winner** |
+
+**Key insight:** the zero-shot base already scores 0.63 ANLS. LoRA on clean train
+data pushes it to **0.88** — a +0.26 absolute gain.
+
+### Qualitative (greedy, `enable_thinking=False`)
 
 | Question | Gold | Prediction |
-|---|---|---|
-| How was the amount contributed? | CHECK | **CHECK** |
-| Which acetabular shell over Porocoat coating? | pinnacle | **54 mm Pinnacle** |
-| Name of the company? | itc limited | **ITC Limited** |
-| Who wrote the letter? | Kay | **Kay** |
+|----------|------|------------|
+| How was the amount contributed? | CHECK | CHECK |
+| Which acetabular shell is measured over Porocoat? | pinnacle | 54 mm Pinnacle |
+| What is the name of the company? | itc limited | ITC Limited |
+| Who wrote the letter? | Kay | Kay |
 
 ---
 
-## Hardware / environment
-
-Developed on a Vast.ai instance: 1× NVIDIA RTX A6000 (48 GB), Unsloth Studio
-image (PyTorch 2.10 + cu128, Unsloth 2026.7.2, TRL, Transformers 5.5).
-The scripts were originally parameterized for a 24 GB RTX 4090 and run far
-under that budget (peak 3.75 GB), so they work on both.
-
-## Repository layout
+## Project Structure
 
 ```
-1_prepare_data.py   # Download DocVQA → filter to top-1,000 → Qwen-VL chat schema
-2_train.py          # Unsloth FastVisionModel + LoRA PEFT training
-3_app.py            # Gradio demo (base model + LoRA adapters, streaming)
-compare.py          # Side-by-side base vs fine-tuned predictions
-hf_infer.py         # Plain-Transformers single-sample inference helper
-requirements.txt    # Python deps (install torch/CUDA wheels first)
-data/               # (gitignored) processed datasets
-outputs/            # (gitignored) training runs, adapters, checkpoints
+VLMFineTuned/
+├── 1_prepare_data.py      # Download DocVQA → quality filter → top-K → Qwen-VL chat schema
+├── 2_train.py             # Unsloth FastVisionModel + LoRA (attn + optional MLP, ViT frozen)
+├── 3_app.py               # Gradio demo (streaming, enable_thinking=False fix)
+├── 4_evaluate.py          # ANLS + exact-match eval harness (official DocVQA metric)
+├── compare.py             # Side-by-side base vs LoRA predictions
+├── hf_infer.py            # Plain Transformers single-sample inference
+├── Dockerfile             # Slim inference image (runtime only, fetches adapters from HF)
+├── docker-entrypoint.sh   # Entrypoint for the Docker image
+├── .dockerignore
+├── requirements.txt       # Python deps (install torch/CUDA first)
+├── data/                  # (gitignored) processed datasets
+│   ├── docvqa_test/       # 20-sample smoke test
+│   ├── docvqa_1k_qwen_vl/ # 1k from val (v1)
+│   └── docvqa_2k_train/   # 2k from train (v2, 1344px)
+├── outputs/               # (gitignored) training runs
+│   ├── test_run/          # 20-sample smoke
+│   ├── qwen3.5_test/      # 20-sample with Qwen3.5
+│   ├── qwen25vl_3b_docvqa_lora/ # 1k val, 3B
+│   ├── v2_r32_mlp/        # 2k train, r32+MLP (WINNER)
+│   └── v2_r16_attn/       # 2k train, r16 attn-only
+├── eval_results/          # (gitignored) ANLS eval outputs
+└── README.md              # This file
 ```
+
+---
 
 ## Pipeline
 
-### 1 — Data preprocessing (`1_prepare_data.py`)
+### 1. Data Preparation (`1_prepare_data.py`)
 
-- Source: `lmms-lab/DocVQA` **validation** split (5,349 rows; used because it was
-  already cached locally — see caveat below).
-- Streaming quality filter: requires valid question (≥5 chars), answer (≤256
-  chars, shortest of the candidate answers), RGB image, aspect ratio ≤ 4.
-  Images are capped at 1024 px on the long edge (LANCZOS) to bound ViT tokens.
-- A heuristic `quality_score` (concise answers, well-formed questions,
-  readable page sizes, multi-annotator agreement) ranks candidates; the top
-  1,000 are kept and shuffled (seed 3407). In practice 3,000 candidates were
-  scanned with **0 hard rejects**, so the score did the selection.
-- Output schema per row (Unsloth vision-collator compatible):
-  `messages = [system, user(image+question), assistant(answer)]` plus a `meta`
-  dict for auditing. Saved with `datasets.save_to_disk` → `data/docvqa_1k_qwen_vl/`.
-
-Reproduce:
 ```bash
-python 1_prepare_data.py --dataset lmms-lab/DocVQA --dataset-name DocVQA --split validation
+# V1 (from val split, 1024px, 1k samples)
+python 1_prepare_data.py --dataset lmms-lab/DocVQA --dataset-name DocVQA --split validation \
+  --target-size 1000 --max-image-edge 1024 --output-dir data/docvqa_1k_qwen_vl
+
+# V2 (from train split, 1344px, 2k samples)
+python 1_prepare_data.py --dataset HuggingFaceM4/DocumentVQA --split train \
+  --target-size 2000 --max-image-edge 1344 --output-dir data/docvqa_2k_train
 ```
 
-### 2 — Fine-tuning (`2_train.py`)
+**What it does:**
+- Loads raw DocVQA (lmms-lab/DocVQA or HuggingFaceM4/DocumentVQA)
+- Validates: question ≥5 chars, answer ≤256 chars (shortest of candidates), valid RGB image
+- Filters aspect ratio ≤4.0, resizes long edge to max (LANCZOS)
+- Scores candidates: concise answers, clear questions, readable page sizes, multi-answer agreement
+- Takes top-K (3× pool → rank → shuffle with seed 3407)
+- Saves in Unsloth-VL conversational schema:
+  ```json
+  {
+    "messages": [
+      {"role":"system","content":[{"type":"text","text":"You are a precise document visual question answering assistant..."}]},
+      {"role":"user","content":[{"type":"image","image":<PIL>},{"type":"text","text":"<question>"}]},
+      {"role":"assistant","content":[{"type":"text","text":"<answer>"}]}
+    ],
+    "meta": {"question":"...","answer":"...","quality_score":82.5,"image_size":[1024,768]}
+  }
+  ```
 
-- `FastVisionModel.from_pretrained(Qwen/Qwen3.5-4B, load_in_4bit=True)`,
-  gradient checkpointing ("unsloth"), max_seq_length 2048.
-- LoRA: r=16, α=16, dropout 0, `bias="none"`, attention projections only
-  (`q_proj/k_proj/v_proj/o_proj`). Vision tower frozen twice over:
-  `finetune_vision_layers=False` plus an explicit `requires_grad=False` sweep
-  over any vision-named parameter.
-- Loss on assistant tokens only (`train_on_responses_only` with the
-  `<|im_start|>user` / `<|im_start|>assistant` markers).
-- Optimizer adamw_8bit, LR 2e-4, cosine schedule, 5% warmup, weight decay 0.01,
-  bf16, max_grad_norm 1.0.
+### 2. Training (`2_train.py`)
 
-Reproduce:
 ```bash
+# V2 winner: r=32 + MLP, 2 epochs, 1344px, 2k train samples
 python 2_train.py \
   --model Qwen/Qwen3.5-4B \
-  --dataset-dir data/docvqa_1k_qwen_vl \
-  --output-dir outputs/qwen35_4b_docvqa_lora \
+  --dataset-dir data/docvqa_2k_train \
+  --output-dir outputs/v2_r32_mlp \
+  --lora-r 32 --lora-alpha 32 --finetune-mlp-modules \
+  --num-epochs 2 --eval-holdout 0.05 \
+  --max-seq-length 3072 --per-device-batch-size 2 --grad-accum-steps 4 \
   --wandb-mode disabled
 ```
 
-### 3 — Inference (important gotcha)
+**Key settings:**
+- Base: `Qwen/Qwen3.5-4B` (4-bit NF4 via bitsandbytes)
+- LoRA: r=32, α=32, dropout=0 — **attention** (`q/k/v/o_proj`) + **MLP** (`gate/up/down_proj`)
+- ViT frozen: `finetune_vision_layers=False` + explicit `requires_grad=False` sweep
+- Loss on assistant tokens only (`train_on_responses_only` with `〈user〉`/`〈assistant〉` markers)
+- Optimizer: `adamw_8bit`, LR 2e-4 cosine, 5% warmup, weight decay 0.01
+- Holdout eval: 5% per-epoch → best checkpoint auto-restored (`load_best_model_at_end`)
+- 2 epochs = 476 steps, ~34 min on A6000, peak VRAM 4.8 GB
 
-`Qwen3.5-4B` is a **thinking-style** model: by default it emits a long
-chain-of-thought before the answer, which hides the concise trained behavior
-and truncates at small `max_new_tokens`. Disable thinking at inference:
+### 3. Evaluation (`4_evaluate.py`)
+
+```bash
+python 4_evaluate.py \
+  --model-id Qwen/Qwen3.5-4B \
+  --adapter-dir outputs/v2_r32_mlp/lora_adapters \
+  --num-samples 300 --max-image-edge 1344 \
+  --output eval_results/v2_r32_mlp_val300.json
+```
+
+**ANLS metric (ICDAR DocVQA standard):**
+- For each prediction, compute best score over all gold answers:
+  `score = max(1 - NLD) if NLD < 0.5 else 0` where `NLD = levenshtein / max(len)`.
+- Also reports case/space-insensitive exact match.
+
+---
+
+## Inference Gotcha: `enable_thinking=False`
+
+`Qwen3.5-4B` is a **thinking-style** model — by default it emits long chain-of-thought
+before the answer, hiding the concise trained behavior and truncating at low
+`max_new_tokens`. **Always disable thinking:**
 
 ```python
 text = processor.apply_chat_template(
     messages, add_generation_prompt=True, tokenize=False,
-    enable_thinking=False,   # ← concise, direct answers
+    enable_thinking=False  # ← critical
 )
 ```
 
-Then greedy decoding with `max_new_tokens=64` returns the short extractive
-answers the model was trained for.
+Both `3_app.py` and `4_evaluate.py` do this automatically.
 
-Demo app (note it defaults to the 3B model — point it at the right base):
-```bash
-python 3_app.py --model Qwen/Qwen3.5-4B \
-  --adapter-dir outputs/qwen35_4b_docvqa_lora/lora_adapters
-```
+---
 
-## What gets published where
+## Docker (Inference Only)
 
-Weights and datasets do **not** belong in git — the repo's `.gitignore` already
-excludes `data/`, `outputs/`, `*.safetensors`, `*.log` and
-`unsloth_compiled_cache/`. GitHub gets code + this README; Hugging Face gets
-the artifacts.
-
-### Push to GitHub (code)
+Slim runtime image (~4 GB) that fetches adapters from HF at startup:
 
 ```bash
-git add -A && git commit -m "Add comparison/inference helpers and project README"
-git push origin main        # remote: https://github.com/hxcsa/VLMFineTuned
+# Build
+docker build -t vlmfinetuned:latest .
+
+# Run (GPU required)
+docker run --gpus all -p 7860:7860 \
+  -e MODEL_ID=Qwen/Qwen3.5-4B \
+  -e ADAPTER_REPO=hxcsa/qwen35-4b-docvqa-lora \
+  vlmfinetuned:latest
 ```
 
-### Push to Hugging Face (artifacts)
+- Base: `pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime`
+- Installs only inference deps (no training stack)
+- Entrypoint runs `3_app.py` with env-configurable model/adapter
 
-1. **LoRA adapters → a model repo** (the main deliverable, ~32 MB incl. tokenizer).
-   Only `lora_adapters/` — skip `checkpoint-100/125` (they only add optimizer/
-   RNG state for resuming) and `final_checkpoint` (same weights again).
-   ```bash
-   huggingface-cli login   # token with write access from https://huggingface.co/settings/tokens
-   huggingface-cli upload <your-user>/qwen35-4b-docvqa-lora \
-     outputs/qwen35_4b_docvqa_lora/lora_adapters .
-   ```
-2. **Processed dataset → a dataset repo** (optional, ~450 MB with images):
-   ```bash
-   huggingface-cli upload <your-user>/docvqa-1k-qwen-vl \
-     data/docvqa_1k_qwen_vl . --repo-type dataset
-   ```
-3. Add a model card: the run's `outputs/qwen35_4b_docvqa_lora/README.md`
-   (auto-generated) is a starting point — add the results table and the
-   `enable_thinking=False` note from this README.
+---
 
-## Known caveats / next steps
+## Reproducing the Full v2 Run
 
-- **Train/eval contamination:** the 1k set was drawn from the DocVQA
-  *validation* split, so benchmark numbers on that split would be inflated.
-  For clean evaluation, retrain from the DocVQA train split or hold out a
-  slice of the 1k before training.
-- The training runs under `outputs/test_run`, `outputs/optimized_run`,
-  `outputs/qwen3.5_test` were 20-sample smoke tests — not real models.
-- One epoch was enough for correct extractive answers with thinking disabled;
-  if you want the model to be terse even in thinking mode, train 2–3 epochs.
+```bash
+# 1. Data (2k from train, 1344px)
+python 1_prepare_data.py --dataset HuggingFaceM4/DocumentVQA --split train \
+  --target-size 2000 --max-image-edge 1344 --output-dir data/docvqa_2k_train
+
+# 2. Parallel training (both fit on 48 GB A6000)
+python 2_train.py --model Qwen/Qwen3.5-4B --dataset-dir data/docvqa_2k_train \
+  --output-dir outputs/v2_r32_mlp --lora-r 32 --lora-alpha 32 --finetune-mlp-modules \
+  --num-epochs 2 --eval-holdout 0.05 --max-seq-length 3072 \
+  --per-device-batch-size 2 --grad-accum-steps 4 --wandb-mode disabled &
+
+python 2_train.py --model Qwen/Qwen3.5-4B --dataset-dir data/docvqa_2k_train \
+  --output-dir outputs/v2_r16_attn --lora-r 16 --lora-alpha 16 \
+  --num-epochs 2 --eval-holdout 0.05 --max-seq-length 3072 \
+  --per-device-batch-size 2 --grad-accum-steps 4 --wandb-mode disabled &
+
+# 3. Evaluate both (ANLS on val, seed 1234, 1344px)
+python 4_evaluate.py --adapter-dir outputs/v2_r32_mlp/lora_adapters --output eval_v2a.json
+python 4_evaluate.py --adapter-dir outputs/v2_r16_attn/lora_adapters --output eval_v2b.json
+
+# 4. Publish winner
+hf upload <user>/qwen35-4b-docvqa-lora outputs/v2_r32_mlp/lora_adapters .
+hf upload <user>/qwen35-4b-docvqa-lora README.md
+```
+
+---
+
+## Artifacts on Hugging Face
+
+| Repo | Contents |
+|------|----------|
+| `hxcsa/qwen35-4b-docvqa-lora` | LoRA adapters (34 MB), tokenizer, chat template, **model card with metrics** |
+| `hxcsa/docvqa-1k-qwen-vl` | 1k samples from val (v1), 453 MB |
+| `hxcsa/docvqa-2k-train` | 2k samples from train (v2), 1.1 GB |
+
+---
+
+## Live Demo
+
+On this Vast.ai instance: external port **10100** (token auth via `OPEN_BUTTON_TOKEN` /
+`WEB_PASSWORD`), internal Gradio on 7860. Managed by supervisor as `vlm-demo`.
+
+```bash
+# Access
+curl -H "Authorization: Bearer $TOKEN" http://<PUBLIC_IP>:55817/
+```
+
+---
+
+## Hardware / Environment
+
+- GPU: NVIDIA RTX A6000 (48 GB) — plenty of headroom (peak 4.8 GB training, 8 GB eval)
+- Image: Vast.ai Unsloth Studio (PyTorch 2.10 + cu128, Unsloth 2026.7)
+- CPU: 48 cores, 1.5 TB RAM
+- All code runs on the GPU instance — nothing on your local machine.
+
+---
+
+## License
+
+Apache-2.0 (code) / base model license applies to weights.
+
+---
+
+## Next Steps / Ideas
+
+- Larger train split (full 39k DocVQA train) → more data = better grounding
+- Ablate vision-layer LoRA (currently frozen) on larger VRAM
+- Distill thinking traces → teach the model to reason for multi-step questions
+- ONNX/TensorRT export for lower-latency serving
